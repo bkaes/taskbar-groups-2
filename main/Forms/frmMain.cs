@@ -46,6 +46,7 @@ namespace client
 
         public int ucShortcutHeight;
         public int ucShortcutWidth;
+        public int iconSize = 64; // Base icon size in pixels (configurable in future)
 
         //------------------------------------------------------------------------------------
         // CTOR AND LOAD
@@ -75,6 +76,10 @@ namespace client
                 ThisCategory = new Category($"config\\{passedDirec}");
                 this.BackColor = ImageFunctions.FromString(ThisCategory.ColorString);
                 Opacity = (1 - (ThisCategory.Opacity / 100));
+                
+                // Use icon size from category if available
+                if (ThisCategory.IconSize > 0)
+                    iconSize = ThisCategory.IconSize;
 
                 if (BackColor.R * 0.2126 + BackColor.G * 0.7152 + BackColor.B * 0.0722 > 255 / 2)
                     //if backcolor is light, set hover color as darker
@@ -301,10 +306,18 @@ namespace client
         {
             //System.Diagnostics.Debugger.Launch();
 
-            this.Width = (int)(55 * xDpi); // Adds a bug where if the (number of icons) < (width in group_panel) show an additional blank space
-            this.Height = (int)(45 * xDpi);
-            ucShortcutHeight = this.Height;
-            ucShortcutWidth = this.Width;
+            // Calculate control size based on icon size with padding
+            // Add padding around the icon (about 20% on each side)
+            int scaledIconSize = (int)(iconSize * xDpi);
+            int padding = (int)(scaledIconSize * 0.2); // 20% padding
+            
+            // Set the size of each shortcut control based on icon + padding
+            ucShortcutHeight = scaledIconSize + (padding * 2);
+            ucShortcutWidth = scaledIconSize + (padding * 2);
+            
+            // Start with zero width and height
+            this.Width = 0;
+            this.Height = ucShortcutHeight;
 
             int x = 0;
             int y = 0;
@@ -324,13 +337,14 @@ namespace client
                 if (columns > width)  // creating new row if there are more psc than max width
                 {
                     x = 0;
-                    y += (int)(45 * xDpi);
-                    this.Height += (int)(45*xDpi);
+                    y += ucShortcutHeight;
+                    this.Height += ucShortcutHeight;
                     columns = 1;
                 }
 
-                if (this.Width < ((width * (int)(55 * xDpi))))
-                    this.Width += ((int)(55 * (xDpi)));
+                // Expand form width only as needed for current row
+                if (x + ucShortcutWidth > this.Width)
+                    this.Width = x + ucShortcutWidth;
 
                 // OLD
                 //BuildShortcutPanel(x, y, psc);
@@ -349,12 +363,9 @@ namespace client
                 pscPanel.BringToFront();
 
                 // Reset values
-                x += (int)(55 * xDpi);
+                x += ucShortcutWidth;
                 columns++;
             }
-
-            // this.Width -= 2; // For some reason the width is 2 pixels larger than the shortcuts. Temporary fix
-            // Fixed by setting the width of the ucPanel to the real value up here 
         }
 
         // OLD (Having some issues with the uc build, so keeping the old code below)

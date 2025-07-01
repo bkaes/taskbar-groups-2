@@ -18,6 +18,7 @@ namespace client.Classes
         public List<ProgramShortcut> ShortcutList;
         public int Width; // not used aon
         public double Opacity = 10;
+        public int IconSize = 64; // Default icon size in pixels
         Regex specialCharRegex = new Regex("[*'\",_&#^@]");
 
         private static int[] iconSizes = new int[] {16,32,64,128,256,512};
@@ -51,6 +52,7 @@ namespace client.Classes
                 this.ColorString = category.ColorString;
                 this.Opacity = category.Opacity;
                 this.allowOpenAll = category.allowOpenAll;
+                this.IconSize = category.IconSize;
             }
         }
 

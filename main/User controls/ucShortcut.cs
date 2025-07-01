@@ -30,6 +30,17 @@ namespace client.User_controls
             this.Show();
             this.BringToFront();
             this.BackColor = MotherForm.BackColor;
+            
+            // Scale the icon size based on DPI - using size from parent form
+            int scaledIconSize = (int)(MotherForm.iconSize * frmMain.xDpi);
+            picIcon.Size = new Size(scaledIconSize, scaledIconSize);
+            
+            // Center the icon within the control
+            picIcon.Location = new Point(
+                (this.Width - scaledIconSize) / 2,
+                (this.Height - scaledIconSize) / 2
+            );
+            
             picIcon.BackgroundImage = ThisCategory.loadImageCache(Psc); // Use the local icon cache for the file specified as the icon image
         }
 
