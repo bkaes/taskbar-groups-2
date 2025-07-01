@@ -7,12 +7,19 @@ using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace client
 {
 
     public partial class frmMain : Form
     {
+        // P/Invoke declarations for Windows 11 taskbar preview fix
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        private const int DWMWA_DISALLOW_PEEK = 11;
+        private const int DWMWA_EXCLUDED_FROM_PEEK = 12;
 
         // Allow doubleBuffering drawing each frame to memory and then onto screen
         // Solves flickering issues mostly as the entire rendering of the screen is done in 1 operation after being first loaded to memory
@@ -45,6 +52,10 @@ namespace client
             mouseClick = new Point(cursorPosX, cursorPosY); // Consstruct point p based on passed x y mouse values
             passedDirec = passedDirectory;
             FormBorderStyle = FormBorderStyle.None;
+            
+            // Windows 11 taskbar preview fix
+            this.ShowInTaskbar = false;
+            this.TopMost = true;
 
             using (MemoryStream ms = new MemoryStream(System.IO.File.ReadAllBytes(MainPath.path + "\\config\\" + passedDirec + "\\GroupIcon.ico")))
                 this.Icon = new Icon(ms);
@@ -75,6 +86,11 @@ namespace client
         {
             LoadCategory();
             SetLocation();
+            
+            // Disable Windows 11 taskbar preview
+            int trueValue = 1;
+            DwmSetWindowAttribute(this.Handle, DWMWA_DISALLOW_PEEK, ref trueValue, sizeof(int));
+            DwmSetWindowAttribute(this.Handle, DWMWA_EXCLUDED_FROM_PEEK, ref trueValue, sizeof(int));
         }
 
         // Sets location of form
@@ -362,7 +378,19 @@ namespace client
         private void frmMain_Deactivate(object sender, EventArgs e)
         {
             // closes program if user clicks outside form
-            this.Close();
+            // Add a small delay to prevent closing when Windows 11 shows taskbar preview
+            var timer = new System.Windows.Forms.Timer();
+            timer.Interval = 100;
+            timer.Tick += (s, args) =>
+            {
+                timer.Stop();
+                timer.Dispose();
+                if (!this.ContainsFocus && !this.Bounds.Contains(Cursor.Position))
+                {
+                    this.Close();
+                }
+            };
+            timer.Start();
         }
 
         // Keyboard shortcut handlers
